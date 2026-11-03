@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 1206296558281170093}
   - component: {fileID: 665265293766949398}
   - component: {fileID: 8150764124683561779}
-  m_Layer: 0
+  - component: {fileID: 3706589240826161031}
+  m_Layer: 7
   m_Name: Micro_Prefab
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -139,6 +140,30 @@ MonoBehaviour:
   turnAngle: 60
   turnSpeed: 12
   debugKeys: 1
+--- !u!114 &3706589240826161031
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8255418456067346887}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14da0e1bf37efd24db804db6b0feeb1d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxEnergy: 100
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 72
+  fallHeightMultiplier: 3
+  fallDamage: 25
+  groundCheckDistance: 0.1
+  playDeathAnimation: 1
+  enableDebugKeys: 1
+  damageKey: 106
+  healKey: 104
+  debugAmount: 20
 --- !u!1 &8865629012967566279
 GameObject:
   m_ObjectHideFlags: 0

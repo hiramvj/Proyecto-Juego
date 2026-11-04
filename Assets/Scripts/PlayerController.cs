@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using UnityEngine;
+
 
 public enum SizeMode { Micro, Grande }
 
@@ -57,6 +59,12 @@ public class PlayerController : MonoBehaviour
     public float turnAngle = 60f;
     public float turnSpeed = 12f;
 
+    [Header("Transformación")]
+    public float transformDuration = 0.35f;
+    public AnimationCurve transformCurve = new AnimationCurve(
+        new Keyframe(0f, 0f), new Keyframe(0.6f, 1.2f), new Keyframe(1f, 1f));
+    public ParticleSystem transformFX;
+
     [Header("Debug")]
     public bool debugKeys = true;
 
@@ -68,6 +76,7 @@ public class PlayerController : MonoBehaviour
     float targetY;
     float moveSpeed;
     float jumpForce;
+    Coroutine scaleRoutine;
 
     void Awake()
     {
@@ -79,7 +88,7 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        ApplyMode(startMode);  
+        ApplyMode(startMode, true);  
     }
 
     void Update()
@@ -139,19 +148,43 @@ public class PlayerController : MonoBehaviour
             center, size, CapsuleDirection2D.Vertical, 0f, obstacleLayer) == null;
     }
 
-    void ApplyMode(SizeMode mode)
+    void ApplyMode(SizeMode mode, bool instant = false)
     {
         CurrentMode = mode;
         SizeSettings s = mode == SizeMode.Micro ? micro : grande;
 
-        visual.localScale = Vector3.one * s.visualScale;
         col.size = s.colliderSize;
         col.offset = s.colliderOffset;
         rb.mass = s.mass;
         moveSpeed = s.moveSpeed;
         jumpForce = s.jumpForce;
 
+        if (scaleRoutine != null) StopCoroutine(scaleRoutine);
+        if (instant)
+        {
+            visual.localScale = Vector3.one * s.visualScale;
+        }
+        else
+        {
+            scaleRoutine = StartCoroutine(ScaleRoutine(s.visualScale));
+            if (transformFX != null) transformFX.Play();
+        }
+
         OnSizeModeChanged?.Invoke(mode);
+    }
+
+    IEnumerator ScaleRoutine(float target)
+    {
+        float from = visual.localScale.x;
+        float t = 0f;
+        while (t < 1f)
+        {
+            t += Time.deltaTime / transformDuration;
+            float k = transformCurve.Evaluate(Mathf.Clamp01(t));
+            visual.localScale = Vector3.one * Mathf.LerpUnclamped(from, target, k);
+            yield return null;
+        }
+        visual.localScale = Vector3.one * target;
     }
 
     public void PlayDeath()

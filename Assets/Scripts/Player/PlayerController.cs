@@ -18,10 +18,13 @@ public class SizeSettings
 
 public class PlayerController : MonoBehaviour
 {
-    // Lo escuchan el HUD (P4) y los objetos empujables (P3)
     public static event Action<SizeMode> OnSizeModeChanged;
+    public static event Action OnMuerte;
+
     public SizeMode CurrentMode { get; private set; }
     public bool CanPush => CurrentMode == SizeMode.Grande;
+    public bool ControlActivo { get; private set; } = true;
+    public bool EstaMuerto { get; private set; }
 
     [Header("Modos de tamaño")]
     public SizeMode startMode = SizeMode.Grande;
@@ -43,7 +46,7 @@ public class PlayerController : MonoBehaviour
         moveSpeed = 4f,
         jumpForce = 8f
     };
-    public LayerMask obstacleLayer;     
+    public LayerMask obstacleLayer;
 
     [Header("Salto con peso")]
     public float fallMultiplier = 2f;
@@ -88,20 +91,25 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        ApplyMode(startMode, true);  
+        ApplyMode(startMode, true);
     }
 
     void Update()
     {
-        moveInput = Input.GetAxis("Horizontal");
+        moveInput = ControlActivo ? Input.GetAxis("Horizontal") : 0f;
         isGrounded = Physics2D.OverlapCircle(
             groundCheck.position, groundRadius, groundLayer);
 
-        if (Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.LeftShift))
-            TrySwitchSize();
+        if (ControlActivo)
+        {
+            if (Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.LeftShift))
+                TrySwitchSize();
 
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
-            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+                rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+
+            if (debugKeys && Input.GetKeyDown(KeyCode.K)) PlayDeath();
+        }
 
         if (moveInput > 0.01f) targetY = 180f - turnAngle;
         if (moveInput < -0.01f) targetY = 180f + turnAngle;
@@ -112,8 +120,6 @@ public class PlayerController : MonoBehaviour
 
         anim.SetFloat("Speed", Mathf.Abs(rb.velocity.x));
         anim.SetBool("IsGrounded", isGrounded);
-
-        if (debugKeys && Input.GetKeyDown(KeyCode.K)) PlayDeath();
     }
 
     void FixedUpdate()
@@ -127,7 +133,13 @@ public class PlayerController : MonoBehaviour
             rb.velocity += Vector2.up * g * (lowJumpMultiplier - 1f) * Time.fixedDeltaTime;
     }
 
-    // ---------- Cambio de tamaño ----------
+    public void SetControlActivo(bool activo)
+    {
+        if (EstaMuerto) return;
+        ControlActivo = activo;
+        if (!activo) moveInput = 0f;
+    }
+
     void TrySwitchSize()
     {
         SizeMode target = CurrentMode == SizeMode.Micro ? SizeMode.Grande : SizeMode.Micro;
@@ -143,7 +155,7 @@ public class PlayerController : MonoBehaviour
     bool HasRoomToGrow()
     {
         Vector2 center = (Vector2)transform.position + grande.colliderOffset;
-        Vector2 size = grande.colliderSize * 0.95f;   
+        Vector2 size = grande.colliderSize * 0.95f;
         return Physics2D.OverlapCapsule(
             center, size, CapsuleDirection2D.Vertical, 0f, obstacleLayer) == null;
     }
@@ -189,8 +201,14 @@ public class PlayerController : MonoBehaviour
 
     public void PlayDeath()
     {
+        if (EstaMuerto) return;   
+        EstaMuerto = true;
+        ControlActivo = false;
+
         anim.SetTrigger("Death");
         rb.velocity = Vector2.zero;
         enabled = false;
+
+        OnMuerte?.Invoke();   
     }
 }

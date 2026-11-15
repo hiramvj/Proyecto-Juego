@@ -1,11 +1,7 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-// Va en el Canvas "UI_FinDeNivel".
-// Muestra el panel de victoria cuando Micro toca la meta y conecta sus botones.
-// El panel de derrota se agrega más adelante, junto con el GameManager.
 public class PantallasFinales : MonoBehaviour
 {
     [Header("Victoria")]
@@ -24,18 +20,13 @@ public class PantallasFinales : MonoBehaviour
 
     void Awake()
     {
-        // No importa si el panel quedó activado o desactivado en la escena:
-        // al empezar el nivel siempre se oculta.
         if (panelVictoria != null) panelVictoria.SetActive(false);
 
-        // Los botones se conectan por código: no hay que tocar su OnClick en el Inspector.
         if (botonSiguiente != null) botonSiguiente.onClick.AddListener(SiguienteNivel);
         if (botonReintentar != null) botonReintentar.onClick.AddListener(Reintentar);
         if (botonMenu != null) botonMenu.onClick.AddListener(IrAlMenu);
     }
 
-    // Escuchar el evento solo mientras este objeto existe y está activo.
-    // Si no se quita en OnDisable, al recargar la escena quedaría un oyente "fantasma".
     void OnEnable() { Meta.OnMetaAlcanzada += AlAlcanzarMeta; }
     void OnDisable() { Meta.OnMetaAlcanzada -= AlAlcanzarMeta; }
 
@@ -57,15 +48,13 @@ public class PantallasFinales : MonoBehaviour
 
         if (retraso > 0f) yield return new WaitForSecondsRealtime(retraso);
 
-        // CanvasGroup controla la transparencia de todo el panel a la vez.
         CanvasGroup grupo = panel.GetComponent<CanvasGroup>();
         if (grupo == null) grupo = panel.AddComponent<CanvasGroup>();
 
-        // El primer hijo del panel es la nota de papel: es lo que "rebota".
         Transform nota = panel.transform.childCount > 0 ? panel.transform.GetChild(0) : null;
 
         grupo.alpha = 0f;
-        grupo.blocksRaycasts = false;   // sin clics mientras aparece
+        grupo.blocksRaycasts = false;  
         panel.SetActive(true);
 
         float duracion = Mathf.Max(0.01f, duracionEntrada);
@@ -84,7 +73,6 @@ public class PantallasFinales : MonoBehaviour
         grupo.blocksRaycasts = true;
     }
 
-    // Va de 0.85 a 1 pasándose un poquito antes de asentarse.
     static float Rebote(float k)
     {
         const float c1 = 1.70158f;
@@ -93,28 +81,9 @@ public class PantallasFinales : MonoBehaviour
         return Mathf.LerpUnclamped(0.85f, 1f, e);
     }
 
-    // ---------- Botones ----------
-    void Reintentar()
-    {
-        Scene escena = SceneManager.GetActiveScene();
-        if (escena.buildIndex < 0)
-        {
-            Debug.LogError("La escena '" + escena.name + "' no está en Build Settings. " +
-                           "Ábrela y ve a File > Build Settings > Add Open Scenes.");
-            return;
-        }
+    void SiguienteNivel() { SceneLoader.SiguienteNivel(); }
 
-        Time.timeScale = 1f;   // por si algo dejó el juego en pausa
-        SceneManager.LoadScene(escena.buildIndex);
-    }
+    void Reintentar() { SceneLoader.ReiniciarNivel(); }
 
-    void SiguienteNivel()
-    {
-        Debug.Log("Siguiente nivel: se conecta en la parte del cambio de escenas.");
-    }
-
-    void IrAlMenu()
-    {
-        Debug.Log("Menú: se conecta en la parte del cambio de escenas.");
-    }
+    void IrAlMenu() { SceneLoader.CargarMenu(); }
 }

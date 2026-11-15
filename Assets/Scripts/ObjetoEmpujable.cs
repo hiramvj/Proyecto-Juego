@@ -74,6 +74,10 @@ public class ObjetoEmpujable : MonoBehaviour
         if (jugador == null)
             return;
 
+        ContactPoint2D contacto = collision.GetContact(0);
+        if (Mathf.Abs(contacto.normal.x) < 0.5f)
+            return;
+
         float direccion = Mathf.Sign(
             transform.position.x - jugador.transform.position.x
         );

@@ -166,6 +166,6 @@ public class PlayerEnergy : MonoBehaviour
     {
         if (OnEnergyChanged != null) OnEnergyChanged(CurrentEnergy, maxEnergy);
 
-        if (controller != null && controller.debugKeys)
+        if (controller != null && controller.debugKeys);
     }
 }

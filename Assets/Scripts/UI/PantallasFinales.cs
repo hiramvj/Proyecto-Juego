@@ -11,6 +11,15 @@ public class PantallasFinales : MonoBehaviour
     [SerializeField] Button botonMenu;
     [Tooltip("Segundos entre tocar la meta y mostrar la pantalla.")]
     [SerializeField] float retrasoVictoria = 0.6f;
+    [SerializeField] AudioClip sonidoVictoria;
+
+    [Header("Derrota")]
+    [SerializeField] GameObject panelDerrota;
+    [SerializeField] Button botonReintentarDerrota;
+    [SerializeField] Button botonMenuDerrota;
+    [Tooltip("Segundos entre la muerte de Micro y la pantalla, para que se vea la animación.")]
+    [SerializeField] float retrasoDerrota = 1.2f;
+    [SerializeField] AudioClip sonidoDerrota;
 
     [Header("Animación de entrada")]
     [Tooltip("Segundos que tarda el panel en aparecer.")]
@@ -20,24 +29,45 @@ public class PantallasFinales : MonoBehaviour
 
     void Awake()
     {
-        if (panelVictoria != null) panelVictoria.SetActive(false);
 
-        if (botonSiguiente != null) botonSiguiente.onClick.AddListener(SiguienteNivel);
-        if (botonReintentar != null) botonReintentar.onClick.AddListener(Reintentar);
-        if (botonMenu != null) botonMenu.onClick.AddListener(IrAlMenu);
+        if (panelVictoria != null) panelVictoria.SetActive(false);
+        if (panelDerrota != null) panelDerrota.SetActive(false);
+
+        if (botonSiguiente != null) botonSiguiente.onClick.AddListener(GameManager.SiguienteNivel);
+        if (botonReintentar != null) botonReintentar.onClick.AddListener(GameManager.ReiniciarNivel);
+        if (botonMenu != null) botonMenu.onClick.AddListener(GameManager.IrAlMenu);
+        if (botonReintentarDerrota != null) botonReintentarDerrota.onClick.AddListener(GameManager.ReiniciarNivel);
+        if (botonMenuDerrota != null) botonMenuDerrota.onClick.AddListener(GameManager.IrAlMenu);
     }
 
-    void OnEnable() { Meta.OnMetaAlcanzada += AlAlcanzarMeta; }
-    void OnDisable() { Meta.OnMetaAlcanzada -= AlAlcanzarMeta; }
+    void OnEnable()
+    {
+        GameManager.OnVictoria += AlGanar;
+        GameManager.OnDerrota += AlPerder;
+    }
 
-    void AlAlcanzarMeta()
+    void OnDisable()
+    {
+        GameManager.OnVictoria -= AlGanar;
+        GameManager.OnDerrota -= AlPerder;
+    }
+
+    void AlGanar()
     {
         if (mostrando) return;
         mostrando = true;
+        AudioManager.Sonar(sonidoVictoria);        
         StartCoroutine(MostrarPanel(panelVictoria, retrasoVictoria));
     }
 
-    // Espera un momento y luego hace aparecer el panel con un pequeño rebote.
+    void AlPerder()
+    {
+        if (mostrando) return;
+        mostrando = true;
+        AudioManager.Sonar(sonidoDerrota);       
+        StartCoroutine(MostrarPanel(panelDerrota, retrasoDerrota));
+    }
+
     IEnumerator MostrarPanel(GameObject panel, float retraso)
     {
         if (panel == null)
@@ -80,10 +110,4 @@ public class PantallasFinales : MonoBehaviour
         float e = 1f + c3 * Mathf.Pow(k - 1f, 3f) + c1 * Mathf.Pow(k - 1f, 2f);
         return Mathf.LerpUnclamped(0.85f, 1f, e);
     }
-
-    void SiguienteNivel() { SceneLoader.SiguienteNivel(); }
-
-    void Reintentar() { SceneLoader.ReiniciarNivel(); }
-
-    void IrAlMenu() { SceneLoader.CargarMenu(); }
 }

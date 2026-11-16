@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-// Qué mensaje muestra la pantalla de carga.
 public enum TipoCarga { Cargando, SiguienteNivel, Reintentar, Menu }
 
 // Cambia de escena mostrando la pantalla de carga.
@@ -19,14 +18,12 @@ public enum TipoCarga { Cargando, SiguienteNivel, Reintentar, Menu }
 [RequireComponent(typeof(Canvas), typeof(CanvasGroup))]
 public class SceneLoader : MonoBehaviour
 {
-    // ---------- Convención de nombres de escena ----------
     public const string EscenaMenu = "MainMenu";
-    public const string PrefijoNivel = "Nivel";      // Nivel0, Nivel1, Nivel2...
-    const string NombrePrefab = "PantallaDeCarga";   // dentro de Assets/Resources
+    public const string PrefijoNivel = "Nivel";   
+    const string NombrePrefab = "PantallaDeCarga";  
 
     static SceneLoader instancia;
 
-    // true mientras hay un cambio de escena en curso.
     public static bool Cargando { get; private set; }
 
     [Header("Piezas de la pantalla")]
@@ -50,11 +47,7 @@ public class SceneLoader : MonoBehaviour
     Canvas canvas;
     CanvasGroup grupo;
 
-    // =====================================================================
-    //  Lo que usan los demás scripts
-    // =====================================================================
 
-    // Número del nivel abierto (0 para "Nivel0"). Devuelve -1 si la escena no es un nivel.
     public static int NivelActual
     {
         get
@@ -68,7 +61,7 @@ public class SceneLoader : MonoBehaviour
         }
     }
 
-    // true si existe la escena del nivel que sigue y está en Build Settings.
+
     public static bool HaySiguienteNivel
     {
         get
@@ -112,7 +105,7 @@ public class SceneLoader : MonoBehaviour
 
     public static void CargarEscena(string nombre, TipoCarga tipo = TipoCarga.Cargando)
     {
-        if (Cargando) return;   // ya hay un cambio en curso: se ignoran los clics repetidos
+        if (Cargando) return;
 
         if (!Application.CanStreamedLevelBeLoaded(nombre))
         {
@@ -124,7 +117,6 @@ public class SceneLoader : MonoBehaviour
         SceneLoader cargador = ObtenerInstancia();
         if (cargador == null)
         {
-            // Sin prefab de pantalla de carga: se cambia de escena directo.
             Time.timeScale = 1f;
             SceneManager.LoadScene(nombre);
             return;
@@ -133,9 +125,6 @@ public class SceneLoader : MonoBehaviour
         cargador.StartCoroutine(cargador.Rutina(nombre, tipo));
     }
 
-    // =====================================================================
-    //  Funcionamiento interno
-    // =====================================================================
 
     static SceneLoader ObtenerInstancia()
     {
@@ -149,7 +138,7 @@ public class SceneLoader : MonoBehaviour
             return null;
         }
 
-        GameObject objeto = Instantiate(prefab);   // su Awake lo registra como instancia
+        GameObject objeto = Instantiate(prefab); 
         objeto.name = NombrePrefab;
         if (instancia == null)
             Debug.LogError("SceneLoader: el prefab " + NombrePrefab + " no tiene el script SceneLoader en su raíz.");
@@ -158,7 +147,6 @@ public class SceneLoader : MonoBehaviour
 
     void Awake()
     {
-        // Solo puede existir uno.
         if (instancia != null && instancia != this)
         {
             Destroy(gameObject);
@@ -166,7 +154,7 @@ public class SceneLoader : MonoBehaviour
         }
 
         instancia = this;
-        DontDestroyOnLoad(gameObject);   // sobrevive a los cambios de escena
+        DontDestroyOnLoad(gameObject);  
 
         canvas = GetComponent<Canvas>();
         grupo = GetComponent<CanvasGroup>();
@@ -184,7 +172,7 @@ public class SceneLoader : MonoBehaviour
     {
         Cargando = true;
 
-        // 1) Aparece la pantalla de carga encima de todo.
+
         if (mensaje != null)
         {
             Sprite s = SpriteDe(tipo);
@@ -192,17 +180,17 @@ public class SceneLoader : MonoBehaviour
         }
         MoverLapiz(0f);
         canvas.enabled = true;
-        grupo.blocksRaycasts = true;     // nadie puede hacer clic en lo de atrás
+        grupo.blocksRaycasts = true;   
         yield return Fundido(0f, 1f);
 
-        // 2) Con la pantalla ya tapada, se carga la escena nueva.
-        Time.timeScale = 1f;             // por si el juego estaba en pausa
+
+        Time.timeScale = 1f;      
         AsyncOperation carga = SceneManager.LoadSceneAsync(escena);
-        carga.allowSceneActivation = false;   // todavía no la muestres
+        carga.allowSceneActivation = false; 
 
         float minimo = Mathf.Max(0.05f, tipo == TipoCarga.Reintentar ? tiempoReintentar : tiempoMinimo);
         float t = 0f;
-        // Unity deja 'progress' en 0.9 cuando la escena está lista para activarse.
+
         while (t < minimo || carga.progress < 0.9f)
         {
             t += Time.unscaledDeltaTime;
@@ -213,11 +201,11 @@ public class SceneLoader : MonoBehaviour
         }
         MoverLapiz(1f);
 
-        // 3) Se activa la escena nueva y desaparece la pantalla.
+
         carga.allowSceneActivation = true;
         while (!carga.isDone) yield return null;
         yield return null;
-        yield return null;               // dos cuadros para que la escena termine de arrancar
+        yield return null;         
 
         yield return Fundido(1f, 0f);
         Ocultar();
@@ -234,8 +222,6 @@ public class SceneLoader : MonoBehaviour
             default: return msgCargando;
         }
     }
-
-    // p va de 0 a 1: la línea se dibuja y el lápiz la sigue por la punta.
     void MoverLapiz(float p)
     {
         if (linea == null) return;

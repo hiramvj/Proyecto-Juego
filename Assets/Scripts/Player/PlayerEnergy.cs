@@ -167,6 +167,5 @@ public class PlayerEnergy : MonoBehaviour
         if (OnEnergyChanged != null) OnEnergyChanged(CurrentEnergy, maxEnergy);
 
         if (controller != null && controller.debugKeys)
-            Debug.Log("Batería: " + CurrentEnergy + " / " + maxEnergy);
     }
 }
